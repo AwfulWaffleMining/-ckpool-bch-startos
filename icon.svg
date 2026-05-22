@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- BCH green background -->
+  <circle cx="256" cy="256" r="256" fill="#0AC18E"/>
+
+  <!--
+    BCH dollar-sign B mark — adapted from the public domain Bitcoin Cash logo.
+    The BCH logo uses a tilted ₿ with doubled vertical serifs and two horizontal
+    bars extending left. This is a simplified upright version for icon use.
+  -->
+
+  <!-- Left vertical bar (extends above and below the B) -->
+  <rect x="152" y="104" width="32" height="304" rx="10" fill="white"/>
+
+  <!-- Top serif bar -->
+  <rect x="144" y="104" width="48" height="24" rx="6" fill="white"/>
+  <!-- Bottom serif bar -->
+  <rect x="144" y="384" width="48" height="24" rx="6" fill="white"/>
+
+  <!-- Upper bowl of B -->
+  <path d="M184 128 h92 a68 68 0 0 1 0 136 H184 Z" fill="white"/>
+  <path d="M202 148 h74 a48 48 0 0 1 0 96 H202 Z" fill="#0AC18E"/>
+
+  <!-- Lower bowl of B (slightly wider) -->
+  <path d="M184 264 h104 a76 76 0 0 1 0 152 H184 Z" fill="white"/>
+  <path d="M202 284 h86 a56 56 0 0 1 0 112 H202 Z" fill="#0AC18E"/>
+
+  <!--
+    Pickaxe — mining element, bottom-right quadrant.
+    Simple geometric representation: angled handle + cross-head.
+  -->
+  <g transform="translate(368,370) rotate(-40)">
+    <!-- Handle -->
+    <rect x="-7" y="8" width="14" height="72" rx="5" fill="white" opacity="0.9"/>
+    <!-- Pick head horizontal bar -->
+    <rect x="-32" y="-6" width="64" height="18" rx="7" fill="white" opacity="0.9"/>
+    <!-- Pick left point -->
+    <polygon points="-32,-6 -44,6 -32,12" fill="white" opacity="0.9"/>
+    <!-- Pick right point -->
+    <polygon points="32,-6 48,6 32,12" fill="white" opacity="0.9"/>
+  </g>
+</svg>
