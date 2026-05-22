@@ -23,6 +23,8 @@ RUN apt-get update && apt-get install -y \
     libjansson4 \
     libcurl4 \
     libzmq5 \
+    curl \
+    python3 \
     && rm -rf /var/lib/apt/lists/*
 
 COPY --from=builder /usr/local/bin/ckpool /usr/local/bin/ckpool

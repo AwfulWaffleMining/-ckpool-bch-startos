@@ -1,0 +1,4 @@
+node_modules/
+*.s9pk
+images/
+.DS_Store
