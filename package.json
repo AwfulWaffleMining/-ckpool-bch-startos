@@ -1,0 +1,12 @@
+{
+  "name": "ckpool-bch-startos",
+  "version": "1.0.0",
+  "description": "CKPool BCH solo mining stratum server — StartOS package",
+  "scripts": {
+    "build": "node build.js",
+    "pack": "start-sdk pack"
+  },
+  "dependencies": {
+    "@start9labs/start-sdk": "^1.5.3"
+  }
+}

@@ -1,0 +1,3 @@
+{
+  "description": "CKPool BCH requires a running Bitcoin Cash Node to source block templates and receive new block notifications via ZMQ. The BCH node must be fully synced before starting CKPool."
+}

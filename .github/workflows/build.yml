@@ -1,0 +1,70 @@
+name: Build & Pack s9pk
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write   # needed to upload release assets
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install start-sdk
+        run: |
+          # Install the start9labs start-sdk CLI (Rust binary via npm shim)
+          npm install -g @start9labs/start-sdk
+          # Install deno (required by start-sdk pack)
+          curl -fsSL https://deno.land/install.sh | sh
+          echo "$HOME/.deno/bin" >> $GITHUB_PATH
+
+      - name: Build ckpool Docker image (x86_64)
+        run: |
+          docker buildx build \
+            --platform linux/amd64 \
+            --output "type=docker,name=ckpool-bch:latest" \
+            --load \
+            -f Dockerfile .
+
+      - name: Export image as tar
+        run: |
+          mkdir -p images/x86_64
+          docker save ckpool-bch:latest -o images/x86_64/ckpool.tar
+
+      - name: Install JS dependencies
+        run: npm ci
+
+      - name: Pack s9pk
+        run: |
+          start-sdk pack
+          ls -lh ckpool-bch.s9pk
+
+      - name: Upload s9pk artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ckpool-bch-s9pk
+          path: ckpool-bch.s9pk
+          retention-days: 30
+
+      - name: Create GitHub Release
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: ckpool-bch.s9pk
+          generate_release_notes: true
