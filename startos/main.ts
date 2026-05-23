@@ -2,35 +2,20 @@ import { sdk } from './sdk'
 import { storeJson } from './file-models/store.json'
 
 export const main = sdk.setupMain(async ({ effects }) => {
-  console.info('Starting CKPool BCH...')
+  console.info('Starting CKPool (DGB mode via port 9335)...')
 
-  // Read stored config — set by the Configure action
   const stored = await storeJson.read().once()
-
   const payoutAddress = stored?.BCH_PAYOUT_ADDRESS ?? ''
-  const poolSig       = stored?.POOL_SIG       ?? '/AwfulWaffle/'
+  const poolSig       = stored?.POOL_SIG       ?? '/AwfulWaffle-DGB/'
   const minDiff       = stored?.MIN_DIFF        ?? 1
   const startDiff     = stored?.START_DIFF      ?? 8
 
-  if (!payoutAddress) {
-    console.error('BCH_PAYOUT_ADDRESS not set — run the Configure action first')
-  }
+  // DGB node running in same container at port 9335
+  const dgbHost    = '10.0.3.179'
+  const dgbRpcPort = '9335'
+  const dgbZmqPort = '7007'
 
-  // Get the bitcoin-cash dependency container IP
-  // Falls back to the standalone node IP (10.0.3.179) if dependency not available
-  let bchHost = '10.0.3.179'
-  let bchRpcPort = '9002'
-  let bchZmqPort = '7002'
-
-  try {
-    const depIp = await sdk.getContainerIp(effects, { packageId: 'bitcoin-cash' }).const()
-    if (depIp) {
-      bchHost = depIp
-      console.info(`Using bitcoin-cash dependency at ${bchHost}`)
-    }
-  } catch {
-    console.info(`Using standalone BCH node at ${bchHost}`)
-  }
+  console.info(`Connecting to DGB node at ${dgbHost}:${dgbRpcPort}`)
 
   return sdk.Daemons.of(effects).addDaemon('ckpool', {
     subcontainer: await sdk.SubContainer.of(
@@ -47,22 +32,22 @@ export const main = sdk.setupMain(async ({ effects }) => {
     exec: {
       command: ['/usr/local/bin/docker_entrypoint.sh'],
       env: {
-        BCH_PAYOUT_ADDRESS:  payoutAddress,
-        POOL_SIG:            poolSig,
-        MIN_DIFF:            String(minDiff),
-        START_DIFF:          String(startDiff),
-        BITCOIN_CASH_HOST:   bchHost,
-        BITCOIN_CASH_RPC_PORT: bchRpcPort,
-        BITCOIN_CASH_ZMQ_PORT: bchZmqPort,
-        BITCOIN_CASH_RPC_USER: 'bchuser',
-        BITCOIN_CASH_RPC_PASS: 'bchpass123',
+        BCH_PAYOUT_ADDRESS:      payoutAddress,
+        POOL_SIG:                poolSig,
+        MIN_DIFF:                String(minDiff),
+        START_DIFF:              String(startDiff),
+        BITCOIN_CASH_HOST:       dgbHost,
+        BITCOIN_CASH_RPC_PORT:   dgbRpcPort,
+        BITCOIN_CASH_ZMQ_PORT:   dgbZmqPort,
+        BITCOIN_CASH_RPC_USER:   'dgbuser',
+        BITCOIN_CASH_RPC_PASS:   'dgbpass123',
       },
     },
     ready: {
       display: 'Stratum Server',
       fn: () =>
         sdk.healthCheck.checkPortListening(effects, 4444, {
-          successMessage: 'Stratum server is ready on port 4444',
+          successMessage: 'DGB stratum ready on port 4444',
           errorMessage: 'Stratum port 4444 not yet open',
         }),
     },
