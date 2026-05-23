@@ -7,11 +7,72 @@ on:
     tags: ['v*']
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}
+  group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
   build:
-    uses: start9labs/shared-workflows/.github/workflows/build.yml@master
-    secrets:
-      DEV_KEY: ${{ secrets.DEV_KEY }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Setup QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Setup Docker Buildx
+        uses: docker/setup-buildx-action@v4
+
+      - name: Install start-cli
+        run: |
+          ARCH=$(uname -m)
+          OS=$(uname -s | tr '[:upper:]' '[:lower:]')
+          ASSET_NAME="start-cli_${ARCH}-${OS}"
+          DOWNLOAD_URL=$(curl -fsS https://api.github.com/repos/Start9Labs/start-os/releases \
+            | jq -r '[.[].assets[] | select(.name=="'"$ASSET_NAME"'")] | first | .browser_download_url')
+          curl -fsSL "$DOWNLOAD_URL" -o /tmp/start-cli
+          sudo install -m 755 /tmp/start-cli /usr/local/bin/start-cli
+          echo "start-cli: $(start-cli --version)"
+
+      - name: Generate developer signing key
+        run: |
+          if [ -n "${{ secrets.DEV_KEY }}" ]; then
+            mkdir -p ~/.startos
+            printf '%s' "${{ secrets.DEV_KEY }}" > ~/.startos/developer.key.pem
+          else
+            start-cli init-key
+          fi
+
+      - name: Install npm dependencies and build TypeScript
+        run: |
+          npm ci
+          npm run check
+          npm run build
+          echo "javascript/index.js built: $(wc -c < javascript/index.js) bytes"
+
+      - name: Build Docker image and pack s9pk
+        run: |
+          ARCHES=x86 make
+          echo ""
+          echo "SHA256SUMs:"
+          sha256sum *.s9pk
+
+      - name: Upload s9pk artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ckpool-bch.s9pk
+          path: "*.s9pk"
+          retention-days: 14
+          compression-level: 0
+
+      - name: Create GitHub Release
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: "*.s9pk"
+          generate_release_notes: true
