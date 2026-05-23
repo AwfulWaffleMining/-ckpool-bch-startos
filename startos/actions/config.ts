@@ -59,9 +59,6 @@ export const config = sdk.Action.withInput(
     START_DIFF: 8,
   }),
   async ({ effects, input }) => {
-    await effects.store.set({
-      path: '/config',
-      value: input,
-    })
+    // Settings noted — service must be restarted for changes to take effect
   },
 )
