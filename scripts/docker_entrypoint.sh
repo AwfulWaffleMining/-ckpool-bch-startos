@@ -5,14 +5,14 @@ set -e
 # bitcoin-cash dependency provides these automatically:
 BCH_HOST="${BITCOIN_CASH_HOST:-127.0.0.1}"
 BCH_RPC_PORT="${BITCOIN_CASH_RPC_PORT:-9002}"
-BCH_RPC_USER="${BITCOIN_CASH_RPC_USER:-testuser}"
-BCH_RPC_PASS="${BITCOIN_CASH_RPC_PASS:-testpass123}"
+BCH_RPC_USER="${BITCOIN_CASH_RPC_USER:-bchuser}"
+BCH_RPC_PASS="${BITCOIN_CASH_RPC_PASS:-bchpass123}"
 BCH_ZMQ_PORT="${BITCOIN_CASH_ZMQ_PORT:-7002}"
 
 # ── User-configurable via Start9 config UI ────────────────────────────────────
 BCH_ADDRESS="${BCH_PAYOUT_ADDRESS:?BCH_PAYOUT_ADDRESS must be set}"
 STRATUM_PORT="${STRATUM_PORT:-4444}"
-POOL_SIG="${POOL_SIG:-/ckpool-bch-startos/}"
+POOL_SIG="${POOL_SIG:-/AwfulWaffle/}"
 MIN_DIFF="${MIN_DIFF:-1}"
 START_DIFF="${START_DIFF:-8}"
 
