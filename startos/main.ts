@@ -16,6 +16,22 @@ export const main = sdk.setupMain(async ({ effects }) => {
     console.error('BCH_PAYOUT_ADDRESS not set — run the Configure action first')
   }
 
+  // Get the bitcoin-cash dependency container IP
+  // Falls back to the standalone node IP (10.0.3.179) if dependency not available
+  let bchHost = '10.0.3.179'
+  let bchRpcPort = '9002'
+  let bchZmqPort = '7002'
+
+  try {
+    const depIp = await sdk.getContainerIp(effects, { packageId: 'bitcoin-cash' }).const()
+    if (depIp) {
+      bchHost = depIp
+      console.info(`Using bitcoin-cash dependency at ${bchHost}`)
+    }
+  } catch {
+    console.info(`Using standalone BCH node at ${bchHost}`)
+  }
+
   return sdk.Daemons.of(effects).addDaemon('ckpool', {
     subcontainer: await sdk.SubContainer.of(
       effects,
@@ -31,10 +47,15 @@ export const main = sdk.setupMain(async ({ effects }) => {
     exec: {
       command: ['/usr/local/bin/docker_entrypoint.sh'],
       env: {
-        BCH_PAYOUT_ADDRESS: payoutAddress,
-        POOL_SIG:           poolSig,
-        MIN_DIFF:           String(minDiff),
-        START_DIFF:         String(startDiff),
+        BCH_PAYOUT_ADDRESS:  payoutAddress,
+        POOL_SIG:            poolSig,
+        MIN_DIFF:            String(minDiff),
+        START_DIFF:          String(startDiff),
+        BITCOIN_CASH_HOST:   bchHost,
+        BITCOIN_CASH_RPC_PORT: bchRpcPort,
+        BITCOIN_CASH_ZMQ_PORT: bchZmqPort,
+        BITCOIN_CASH_RPC_USER: 'bchuser',
+        BITCOIN_CASH_RPC_PASS: 'bchpass123',
       },
     },
     ready: {
