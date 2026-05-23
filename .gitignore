@@ -1,5 +1,5 @@
-node_modules/
-dist/
-images/
 *.s9pk
-*.tar.gz
+startos/*.js
+node_modules/
+.DS_Store
+ncc-cache
