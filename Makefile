@@ -1,2 +1,2 @@
-ARCH := x86
+ARCHES := x86
 include s9pk.mk
