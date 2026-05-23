@@ -63,7 +63,7 @@ export const config = sdk.Action.withInput(
     }
   },
   async ({ effects, input }) => {
-    await storeJson.write(effects, {
+    await storeJson.merge(effects, {
       BCH_PAYOUT_ADDRESS: input.BCH_PAYOUT_ADDRESS,
       POOL_SIG: input.POOL_SIG ?? '/AwfulWaffle/',
       MIN_DIFF: input.MIN_DIFF ?? 1,
