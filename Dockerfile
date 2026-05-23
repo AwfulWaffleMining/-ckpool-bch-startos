@@ -10,6 +10,7 @@ RUN apt-get update && apt-get install -y \
     autoconf \
     libtool \
     pkg-config \
+    libcap2-bin \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /build
