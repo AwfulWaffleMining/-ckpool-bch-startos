@@ -4,32 +4,25 @@ import { storeJson } from './file-models/store.json'
 export const main = sdk.setupMain(async ({ effects }) => {
   console.info('Starting CKPool BCH...')
 
-  // Read stored config — set by the Configure action
   const stored = await storeJson.read().once()
-
   const payoutAddress = stored?.BCH_PAYOUT_ADDRESS ?? ''
   const poolSig       = stored?.POOL_SIG       ?? '/AwfulWaffle/'
   const minDiff       = stored?.MIN_DIFF        ?? 1
   const startDiff     = stored?.START_DIFF      ?? 8
 
-  if (!payoutAddress) {
-    console.error('BCH_PAYOUT_ADDRESS not set — run the Configure action first')
-  }
-
-  // Get the bitcoin-cash dependency container IP
-  // Falls back to a known-good IP if dependency lookup fails
-  let bchHost    = '10.0.3.179'
+  // bitcoin-cash Start9 package container — try getContainerIp first, fallback to known IP
+  let bchHost    = '10.0.3.120'   // bitcoin-cash package container (stable)
   const bchRpcPort = '9002'
   const bchZmqPort = '7002'
 
   try {
     const depIp = await sdk.getContainerIp(effects, { packageId: 'bitcoin-cash' }).const()
-    if (depIp) {
+    if (depIp && depIp !== '10.0.3.179') {
       bchHost = depIp
-      console.info(`Using bitcoin-cash dependency at ${bchHost}`)
+      console.info(`Using bitcoin-cash container IP: ${bchHost}`)
     }
   } catch {
-    console.info(`Using fallback BCH node at ${bchHost}`)
+    console.info(`Using known bitcoin-cash IP: ${bchHost}`)
   }
 
   return sdk.Daemons.of(effects).addDaemon('ckpool', {
