@@ -1,0 +1,67 @@
+import { sdk } from '../sdk'
+
+const { InputSpec, Value } = sdk
+
+export const inputSpec = InputSpec.of({
+  BCH_PAYOUT_ADDRESS: Value.text({
+    name: 'BCH Payout Address',
+    description: 'Your Bitcoin Cash address for block rewards',
+    required: true,
+    placeholder: 'bitcoincash:q...',
+    default: null,
+    patterns: [],
+    inputmode: 'text',
+    masked: false,
+  }),
+  POOL_SIG: Value.text({
+    name: 'Pool Signature',
+    description: 'Tag included in coinbase transactions',
+    required: false,
+    default: '/AwfulWaffle/',
+    placeholder: '/YourTag/',
+    patterns: [],
+    inputmode: 'text',
+    masked: false,
+  }),
+  MIN_DIFF: Value.number({
+    name: 'Minimum Difficulty',
+    description: 'Minimum share difficulty enforced for all miners.',
+    required: false,
+    default: 1,
+    min: 1,
+    integer: false,
+  }),
+  START_DIFF: Value.number({
+    name: 'Starting Difficulty',
+    description: 'Initial difficulty assigned to newly connected miners.',
+    required: false,
+    default: 8,
+    min: 1,
+    integer: false,
+  }),
+})
+
+export const config = sdk.Action.withInput(
+  'config',
+  async ({ effects }) => ({
+    name: 'Configure',
+    description: 'Set CKPool BCH stratum settings',
+    warning: 'Changing these settings requires restarting CKPool BCH.',
+    allowedStatuses: 'any',
+    group: null,
+    visibility: 'enabled',
+  }),
+  inputSpec,
+  async ({ effects }) => ({
+    BCH_PAYOUT_ADDRESS: '',
+    POOL_SIG: '/AwfulWaffle/',
+    MIN_DIFF: 1,
+    START_DIFF: 8,
+  }),
+  async ({ effects, input }) => {
+    await effects.store.set({
+      path: '/config',
+      value: input,
+    })
+  },
+)
