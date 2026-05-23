@@ -1,4 +1,5 @@
 import { sdk } from '../sdk'
+import { storeJson } from '../file-models/store.json'
 
 const { InputSpec, Value } = sdk
 
@@ -52,13 +53,21 @@ export const config = sdk.Action.withInput(
     visibility: 'enabled',
   }),
   inputSpec,
-  async ({ effects }) => ({
-    BCH_PAYOUT_ADDRESS: '',
-    POOL_SIG: '/AwfulWaffle/',
-    MIN_DIFF: 1,
-    START_DIFF: 8,
-  }),
+  async ({ effects }) => {
+    const stored = await storeJson.read().once()
+    return {
+      BCH_PAYOUT_ADDRESS: stored?.BCH_PAYOUT_ADDRESS ?? '',
+      POOL_SIG: stored?.POOL_SIG ?? '/AwfulWaffle/',
+      MIN_DIFF: stored?.MIN_DIFF ?? 1,
+      START_DIFF: stored?.START_DIFF ?? 8,
+    }
+  },
   async ({ effects, input }) => {
-    // Settings noted — service must be restarted for changes to take effect
+    await storeJson.write(effects, {
+      BCH_PAYOUT_ADDRESS: input.BCH_PAYOUT_ADDRESS,
+      POOL_SIG: input.POOL_SIG ?? '/AwfulWaffle/',
+      MIN_DIFF: input.MIN_DIFF ?? 1,
+      START_DIFF: input.START_DIFF ?? 8,
+    })
   },
 )
