@@ -16,10 +16,10 @@ export const inputSpec = InputSpec.of({
   }),
   POOL_SIG: Value.text({
     name: 'Pool Signature',
-    description: 'Tag included in coinbase transactions',
+    description: 'Optional tag embedded in coinbase transactions when a block is found. Visible on-chain. Use format /YourName/ by convention. Leave blank for no tag.',
     required: false,
-    default: '/AwfulWaffle/',
-    placeholder: '/YourTag/',
+    default: null,
+    placeholder: '/YourName/',
     patterns: [],
     inputmode: 'text',
     masked: false,
@@ -57,7 +57,7 @@ export const config = sdk.Action.withInput(
     const stored = await storeJson.read().once()
     return {
       BCH_PAYOUT_ADDRESS: stored?.BCH_PAYOUT_ADDRESS ?? '',
-      POOL_SIG: stored?.POOL_SIG ?? '/AwfulWaffle/',
+      POOL_SIG: stored?.POOL_SIG ?? null,
       MIN_DIFF: stored?.MIN_DIFF ?? 1,
       START_DIFF: stored?.START_DIFF ?? 8,
     }

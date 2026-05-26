@@ -12,7 +12,7 @@ BCH_ZMQ_PORT="${BITCOIN_CASH_ZMQ_PORT:-7002}"
 # ── User-configurable via Start9 config UI ────────────────────────────────────
 BCH_ADDRESS="${BCH_PAYOUT_ADDRESS:?BCH_PAYOUT_ADDRESS must be set}"
 STRATUM_PORT="${STRATUM_PORT:-4444}"
-POOL_SIG="${POOL_SIG:-/AwfulWaffle/}"
+POOL_SIG="${POOL_SIG:-}"
 MIN_DIFF="${MIN_DIFF:-1}"
 START_DIFF="${START_DIFF:-8}"
 
@@ -49,7 +49,7 @@ cat > "${CONF_FILE}" <<EOF
   }
 ],
 "btcaddress"      : "${BCH_ADDRESS}",
-"btcsig"          : "${POOL_SIG}",
+$([ -n "${POOL_SIG}" ] && echo '"btcsig" : "'"${POOL_SIG}"'",' || echo '')
 "blockpoll"       : 100,
 "nonce1length"    : 4,
 "nonce2length"    : 8,
