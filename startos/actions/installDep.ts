@@ -11,7 +11,7 @@ export const installDep = sdk.Action.withoutInput(
     warning: null,
     allowedStatuses: 'any' as const,
     group: null,
-    visibility: 'enabled' as const,
+    visibility: { disabled: 'Install the Bitcoin Cash Node package to proceed' },
   }),
 
   async ({ effects }) => {
