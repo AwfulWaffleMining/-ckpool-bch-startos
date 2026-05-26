@@ -22,9 +22,6 @@ jobs:
         with:
           node-version: '22'
 
-      - name: Setup Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
       - name: Install system dependencies
         run: |
           sudo apt-get update
