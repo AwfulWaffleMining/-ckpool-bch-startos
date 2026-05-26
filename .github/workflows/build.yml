@@ -22,6 +22,11 @@ jobs:
         with:
           node-version: '22'
 
+      - name: Setup Docker Buildx
+        run: |
+          docker buildx create --use --name builder --driver docker-container
+          docker buildx inspect --bootstrap
+
       - name: Install system dependencies
         run: |
           sudo apt-get update
