@@ -1,5 +1,5 @@
 import { sdk } from '../sdk'
 import { config } from './config'
-import { installDep } from './installDep'
+import { depNotInstalled, depNotSynced } from './installDep'
 
-export const actions = sdk.Actions.of().addAction(config).addAction(installDep)
+export const actions = sdk.Actions.of().addAction(config).addAction(depNotInstalled).addAction(depNotSynced)
