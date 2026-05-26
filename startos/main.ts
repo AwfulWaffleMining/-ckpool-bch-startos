@@ -3,6 +3,8 @@ import { storeJson } from './file-models/store.json'
 
 export const main = sdk.setupMain(async ({ effects }) => {
   console.info('Starting CKPool BCH...')
+  // Clear the dependency notice task — if we're starting, bitcoin-cash is present
+  await sdk.action.clearTask(effects, 'install-dep').catch(() => {})
 
   const stored = await storeJson.read().once()
   const payoutAddress = stored?.BCH_PAYOUT_ADDRESS ?? ''
