@@ -30,7 +30,7 @@ export const manifest = setupManifest({
   },
   dependencies: {
     'bitcoin-cash': {
-      description: 'CKPool BCH requires a running, fully-synced Bitcoin Cash Node for block templates and ZMQ block notifications.',
+      description: 'Must enable ZMQ in Bitcoin Cash to use it with CKPool BCH',
       optional: false,
       s9pk: null,
     },
