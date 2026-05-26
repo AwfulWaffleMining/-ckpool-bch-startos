@@ -9,7 +9,7 @@ import { installDep } from '../actions/installDep'
 const createDepTask = sdk.setupOnInit(
   async (effects, kind) => {
     if (kind === 'install') {
-      await sdk.action.createOwnTask(effects, installDep, 'critical', {
+      await sdk.action.createOwnTask(effects, installDep, 'important', {
         replayId: 'install-dep',
         reason: 'Must enable ZMQ in Bitcoin Cash to use it with CKPool BCH',
       })
