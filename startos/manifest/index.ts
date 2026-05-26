@@ -30,14 +30,9 @@ export const manifest = setupManifest({
   },
   dependencies: {
     'bitcoin-cash': {
-      description: {
-        en_US: 'CKPool BCH requires a running, fully-synced Bitcoin Cash Node for block templates and ZMQ notifications.',
-      },
+      description: 'CKPool BCH requires a running, fully-synced Bitcoin Cash Node for block templates and ZMQ block notifications.',
       optional: false,
-      metadata: {
-        title: 'Bitcoin Cash Node',
-        icon: 'https://raw.githubusercontent.com/AwfulWaffleMining/bitcoin-cash-startos/main/icon.svg',
-      },
+      s9pk: null,
     },
   },
 })
