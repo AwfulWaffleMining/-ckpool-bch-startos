@@ -69,5 +69,7 @@ export const config = sdk.Action.withInput(
       MIN_DIFF: input.MIN_DIFF ?? 1,
       START_DIFF: input.START_DIFF ?? 8,
     })
+    // Clear the first-run setup task if it exists
+    await sdk.action.clearTask(effects, 'initial-setup')
   },
 )
