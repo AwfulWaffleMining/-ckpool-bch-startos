@@ -63,6 +63,7 @@ export const config = sdk.Action.withInput(
     }
   },
   async ({ effects, input }) => {
+    await sdk.action.clearTask(effects, 'configure-payout').catch(() => {})
     await storeJson.merge(effects, {
       BCH_PAYOUT_ADDRESS: input.BCH_PAYOUT_ADDRESS,
       POOL_SIG: input.POOL_SIG ?? '/AwfulWaffle/',
