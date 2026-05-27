@@ -30,12 +30,13 @@ RUN apt-get update && apt-get install -y \
 
 COPY --from=builder /usr/local/bin/ckpool /usr/local/bin/ckpool
 COPY scripts/docker_entrypoint.sh /usr/local/bin/docker_entrypoint.sh
-RUN chmod +x /usr/local/bin/docker_entrypoint.sh
+COPY scripts/stats_server.py /usr/local/bin/stats_server.py
+RUN chmod +x /usr/local/bin/docker_entrypoint.sh /usr/local/bin/stats_server.py
 
 # Data volume — StartOS mounts this at /data
 VOLUME ["/data"]
 
-# Stratum port
-EXPOSE 4444
+# Stratum port + stats web UI
+EXPOSE 4444 8080
 
 ENTRYPOINT ["/usr/local/bin/docker_entrypoint.sh"]

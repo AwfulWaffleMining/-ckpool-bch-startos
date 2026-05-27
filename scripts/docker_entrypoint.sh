@@ -68,4 +68,7 @@ EOF
 echo "[ckpool-bch] Starting stratum on port ${STRATUM_PORT}"
 echo "[ckpool-bch] Payout address: ${BCH_ADDRESS}"
 
+# Start stats web UI in background
+python3 /usr/local/bin/stats_server.py &
+
 exec /usr/local/bin/ckpool --config "${CONF_FILE}"

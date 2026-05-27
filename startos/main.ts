@@ -60,4 +60,16 @@ export const main = sdk.setupMain(async ({ effects }) => {
     },
     requires: [],
   })
+  .addHealthCheck('web', {
+    ready: {
+      display: 'Web Interface',
+      fn: () =>
+        sdk.healthCheck.checkPortListening(effects, 8080, {
+          successMessage: 'The web interface is ready',
+          errorMessage: 'Web interface is not yet ready',
+        }),
+      gracePeriod: 15_000,
+    },
+    requires: ['ckpool'],
+  })
 })
