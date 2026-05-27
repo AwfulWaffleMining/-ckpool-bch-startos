@@ -180,8 +180,9 @@ def dashboard_html(s):
 
 # ── How to Connect page ────────────────────────────────────────────────────────
 
-def connect_html():
+def connect_html(host='[your-stratum-address]'):
     bch = html.escape(BCH_ADDRESS) if BCH_ADDRESS else 'bitcoincash:your_bch_address'
+    stratum_url = f'stratum+tcp://{html.escape(host)}:4444'
     return f'''<!DOCTYPE html><html><head><meta charset="utf-8">
 <title>How to Connect — CKPool BCH</title>
 <style>{CSS}</style></head><body>
@@ -202,14 +203,14 @@ def connect_html():
 <div class="step">
   <div class="step-num">Step 2 — Copy these settings into your miner</div>
   <p style="color:#aaa;font-size:13px;margin-bottom:6px">
-    Find your Stratum URL in StartOS → CKPool BCH → Service Interfaces → Stratum Mining, then enter the values below.
+    Enter the values below into your miner\'s pool settings. Click any value to copy it.
   </p>
   <table class="cfg-table">
     <tr>
       <td>Pool URL</td>
       <td>
-        <div class="cfg-val">[your-stratum-address]:4444</div>
-        <div class="hint">⬆ Copy from StartOS → CKPool BCH → Service Interfaces → Stratum Mining</div>
+        <div class="cfg-val" id="stratumVal" onclick="copyVal(this)">{stratum_url}</div>
+        <div class="hint">Click to copy</div>
       </td>
     </tr>
     <tr>
@@ -261,7 +262,8 @@ function copyVal(el) {{
 class Handler(http.server.BaseHTTPRequestHandler):
     def log_message(self, *args): pass
     def do_GET(self):
-        body = connect_html() if self.path.startswith('/connect') else dashboard_html(read_stats())
+        host = (self.headers.get('Host') or '').split(':')[0] or '[your-stratum-address]'
+        body = connect_html(host) if self.path.startswith('/connect') else dashboard_html(read_stats())
         self.send_response(200)
         self.send_header('Content-Type', 'text/html; charset=utf-8')
         self.send_header('Cache-Control', 'no-cache, no-store, must-revalidate')
