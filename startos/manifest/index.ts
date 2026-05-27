@@ -7,8 +7,8 @@ export const manifest = setupManifest({
   packageRepo: 'https://github.com/AwfulWaffleMining/-ckpool-bch-startos',
   upstreamRepo: 'https://bitbucket.org/ckolivas/ckpool',
   supportSite: 'https://github.com/AwfulWaffleMining/-ckpool-bch-startos/issues',
-  marketingUrl: 'https://bitbucket.org/ckolivas/ckpool',
-  donationUrl: null,
+  marketingUrl: 'https://www.awfulwafflemining.com',
+  donationUrl: 'https://www.awfulwafflemining.com/donate',
   description: {
     short: 'CKPool solo mining stratum server for Bitcoin Cash (BCH)',
     long: 'CKPool BCH is a high-performance solo mining stratum server that connects directly to your local Bitcoin Cash Node. Point your SHA-256 miners at port 4444 and every block found pays the full reward straight to your configured BCH address — no pool fees, no third parties.',

@@ -72,6 +72,8 @@ def read_stats():
     tot_acc = tot_rej = 0
     pool_hashrate = '—'
     pool_rej_pct = '0.00%'
+    pool_runtime = 0
+    pool_sps1h = 0.0
 
     if os.path.isdir(USERS_DIR):
         for uf in sorted(os.listdir(USERS_DIR)):
@@ -86,8 +88,7 @@ def read_stats():
                     workers.append({
                         'name':      html.escape(short_name(wname)),
                         'fullname':  html.escape(wname),
-                        'hashrate':  w.get('hashrate1m', '—'),
-                        'shares':    w.get('shares', 0),
+                        'hashrate':  w.get('hashrate5m', w.get('hashrate1m', '—')),
                         'best':      int(w.get('bestshare', 0)),
                         'status':    status,
                     })
@@ -100,10 +101,16 @@ def read_stats():
                 for line in f:
                     try:
                         d = json.loads(line.strip())
+                        if 'runtime' in d and 'Users' in d:
+                            pool_runtime = d['runtime']
                         if 'accepted' in d:
                             tot_acc, tot_rej = d['accepted'], d['rejected']
-                        if 'hashrate1m' in d and 'Users' not in d:
-                            pool_hashrate = d['hashrate1m']
+                            solved = d.get('solved', 0)
+                            if solved:
+                                blocks = solved
+                            pool_sps1h = float(d.get('SPS1h', 0))
+                        if 'hashrate1m' in d and 'Users' not in d and 'accepted' not in d:
+                            pool_hashrate = d.get('hashrate5m', d.get('hashrate1m', '—'))
                     except Exception:
                         pass
             pool_rej_pct = f'{(tot_rej/max(1,tot_acc+tot_rej)*100):.2f}%'
@@ -111,18 +118,24 @@ def read_stats():
             pass
 
     pool_log = os.path.join(LOG_DIR, 'ckpool.log')
-    if os.path.exists(pool_log):
+    if blocks == 0 and os.path.exists(pool_log):
         try:
             with open(pool_log, 'r') as f:
-                blocks = f.read().count('Solved block')
+                content = f.read()
+            for pattern in ('Solved block', 'solved block', 'Block solve', 'Found block'):
+                n = content.count(pattern)
+                if n:
+                    blocks = n
+                    break
         except Exception:
             pass
 
     active  = sum(1 for w in workers if w['status'] == 'active')
     offline = sum(1 for w in workers if w['status'] == 'offline')
+    share_count = int(pool_sps1h * pool_runtime) if pool_runtime > 0 else tot_acc
     return {'workers': workers, 'blocks': blocks,
             'active': active, 'offline': offline,
-            'tot_acc': tot_acc, 'tot_rej': tot_rej,
+            'tot_acc': tot_acc, 'tot_rej': tot_rej, 'share_count': share_count,
             'hashrate': pool_hashrate, 'rej_pct': pool_rej_pct}
 
 # ── Shared CSS ─────────────────────────────────────────────────────────────────
@@ -184,10 +197,10 @@ input[type=text]:focus{border-color:#00ff88}
 def dashboard_html(s):
     rows = ''.join(f'''<tr>
       <td title="{w["fullname"]}">{w["name"]}</td>
-      <td>{w["shares"]:,}</td><td>{w["hashrate"]}</td><td>{w["best"]:,}</td>
+      <td>{format_difficulty(w["best"])}</td><td>{w["hashrate"]}</td>
       <td><span class="badge {"ba" if w["status"]=="active" else "bo"}">{w["status"].upper()}</span></td>
     </tr>''' for w in s['workers']
-    ) or '<tr><td colspan="5" style="color:#555;text-align:center;padding:20px">No miners connected yet</td></tr>'
+    ) or '<tr><td colspan="4" style="color:#555;text-align:center;padding:20px">No miners connected yet</td></tr>'
 
     last_update = time.strftime('%I:%M %p', time.localtime())
 
@@ -204,7 +217,7 @@ def dashboard_html(s):
     <div class="card-title"><span class="dot dot-b"></span>Account Info
       <span style="font-size:9px;background:#1e3a2a;color:#00ff88;padding:2px 6px;border-radius:3px;margin-left:auto">SOLO</span>
     </div>
-    <div class="big">{s["tot_acc"]:,}</div><div class="lbl" style="margin-bottom:12px">valid shares</div>
+    <div class="big">{s["share_count"]:,}</div><div class="lbl" style="margin-bottom:12px">valid shares</div>
     <div class="sub-row">
       <div><div class="sub-val">{s["tot_rej"]}</div><div class="lbl">Rejected</div></div>
       <div><div class="sub-val g">{s["blocks"]}</div><div class="lbl">Blocks</div></div>
@@ -212,7 +225,7 @@ def dashboard_html(s):
   </div>
   <div class="card">
     <div class="card-title"><span class="dot dot-g"></span>Hashrate</div>
-    <div class="big">{s["hashrate"]}</div><div class="lbl" style="margin-bottom:12px">current speed</div>
+    <div class="big">{total_hashrate_str(s["workers"])}</div><div class="lbl" style="margin-bottom:12px">current speed</div>
     <div class="sub-row">
       <div><div class="sub-val">{s["rej_pct"]}</div><div class="lbl">Rejection</div></div>
     </div>
@@ -228,6 +241,7 @@ def dashboard_html(s):
     </div>
   </div>
 </div>
+
 
 <div class="chart-wrap">
   <div class="chart-header">
@@ -253,7 +267,7 @@ def dashboard_html(s):
 
 <div class="table-wrap">
   <div class="table-title">Active Workers</div>
-  <table><tr><th>Worker</th><th>Shares</th><th>Hashrate</th><th>Best Share</th><th>Status</th></tr>
+  <table><tr><th>Worker</th><th>Best Difficulty</th><th>Hashrate</th><th>Status</th></tr>
   {rows}</table>
 </div>
 <div class="footer">
@@ -385,6 +399,34 @@ def parse_hashrate_num(hs_str):
         return float(s)
     except Exception:
         return 0.0
+
+def format_difficulty(n):
+    """Format raw bestshare difficulty to human-readable string."""
+    if n >= 1_000_000_000_000:
+        return f"{n/1_000_000_000_000:.2f}T"
+    if n >= 1_000_000_000:
+        return f"{n/1_000_000_000:.2f}G"
+    if n >= 1_000_000:
+        return f"{n/1_000_000:.2f}M"
+    if n >= 1_000:
+        return f"{n/1_000:.1f}K"
+    return str(n)
+
+def total_hashrate_str(workers):
+    """Sum active worker hashrates and return formatted string."""
+    active = [w for w in workers if w['status'] == 'active']
+    if not active:
+        return '—'
+    total_ths = sum(parse_hashrate_num(w.get('hashrate', '0')) for w in active)
+    if total_ths == 0:
+        return '—'
+    if total_ths >= 1000:
+        return f"{total_ths/1000:.2f}P"
+    if total_ths >= 1:
+        return f"{total_ths:.2f}T"
+    if total_ths >= 0.001:
+        return f"{total_ths * 1000:.2f}G"
+    return f"{total_ths * 1e6:.2f}M"
 
 class Handler(http.server.BaseHTTPRequestHandler):
     def log_message(self, *args): pass
