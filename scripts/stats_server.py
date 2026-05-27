@@ -259,7 +259,7 @@ def dashboard_html(s):
 <div class="footer">
   Auto-refreshes every 30s &nbsp;·&nbsp; Stratum port 4444 &nbsp;·&nbsp; Hover worker name for full address
   <br style="margin-bottom:6px">
-  Powered by <a href="https://www.awfulwafflemining.com" target="_blank" style="color:#00ff88;text-decoration:none">AwfulWaffleMining.com</a>
+  Powered by <a href="https://www.awfulwafflemining.com" target="_blank" style="color:#00ff88;text-decoration:none">Awful Waffle Mining</a>
   &nbsp;—&nbsp; <em style="color:#666">where all of AI goes to hash</em>
 </div>
 
