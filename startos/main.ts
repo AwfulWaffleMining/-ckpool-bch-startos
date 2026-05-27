@@ -68,7 +68,7 @@ export const main = sdk.setupMain(async ({ effects }) => {
           successMessage: 'The web interface is ready',
           errorMessage: 'Web interface is not yet ready',
         }),
-      gracePeriod: 15_000,
+      gracePeriod: 3_000,
     },
     requires: ['ckpool'],
   })

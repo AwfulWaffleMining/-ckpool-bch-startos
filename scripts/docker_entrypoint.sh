@@ -68,7 +68,13 @@ EOF
 echo "[ckpool-bch] Starting stratum on port ${STRATUM_PORT}"
 echo "[ckpool-bch] Payout address: ${BCH_ADDRESS}"
 
-# Start stats web UI in background
+# Start stats web UI and wait until it's confirmed listening before ckpool starts
 python3 /usr/local/bin/stats_server.py &
+STATS_PID=$!
+for i in $(seq 1 20); do
+    python3 -c "import socket; s=socket.socket(); s.settimeout(0.5); s.connect(('127.0.0.1',8080)); s.close()" 2>/dev/null && break
+    sleep 0.2
+done
+echo "[ckpool-bch] Stats web UI ready on port 8080"
 
 exec /usr/local/bin/ckpool --config "${CONF_FILE}"
