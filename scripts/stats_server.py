@@ -7,71 +7,68 @@ class ThreadedHTTPServer(ThreadingMixIn, http.server.HTTPServer):
     """Handle each request in its own thread — fixes F5/concurrent spinning."""
     daemon_threads = True
 
-LOG_DIR = '/data/ckpool/logs'
-PORT    = 8080
-SKIP    = {'ckpool', 'listener', 'generator', 'stratifier', 'connector', 'ckdb'}
-BCH_ADDRESS = os.environ.get('BCH_PAYOUT_ADDRESS', '')
-
-# ── Parse ckpool worker log files ─────────────────────────────────────────────
-
-def parse_worker(path):
-    name = os.path.basename(path).replace('.log', '')
-    w = {'name': name, 'accepted': 0, 'rejected': 0, 'stale': 0,
-         'diff': 0, 'dsps': 0.0, 'status': 'active'}
-    try:
-        with open(path, 'r') as f:
-            lines = f.readlines()
-        for line in reversed(lines):
-            line = line.strip()
-            if line.startswith('{'):
-                try:
-                    d = json.loads(line)
-                    w['accepted'] = d.get('accepted', 0)
-                    w['rejected'] = d.get('rejected', 0)
-                    w['stale']    = d.get('stale', 0)
-                    w['diff']     = d.get('diff', 0)
-                    w['dsps']     = d.get('dsps', 0.0)
-                    break
-                except Exception:
-                    pass
-        if time.time() - os.path.getmtime(path) > 600:
-            w['status'] = 'offline'
-    except Exception:
-        pass
-    return w
+LOG_DIR      = '/data/ckpool/logs'
+USERS_DIR    = '/data/ckpool/logs/users'
+POOL_STATUS  = '/data/ckpool/logs/pool/pool.status'
+PORT         = 8080
+BCH_ADDRESS  = os.environ.get('BCH_PAYOUT_ADDRESS', '')
 
 def read_stats():
-    workers, blocks = [], 0
-    if os.path.isdir(LOG_DIR):
-        for wf in sorted(glob.glob(os.path.join(LOG_DIR, '*.log'))):
-            if os.path.basename(wf).replace('.log', '').lower() not in SKIP:
-                workers.append(parse_worker(wf))
-        pool_log = os.path.join(LOG_DIR, 'ckpool.log')
-        if os.path.exists(pool_log):
+    workers = []
+    blocks = 0
+    tot_acc = tot_rej = 0
+    pool_hashrate = '—'
+    pool_rej_pct = '0.00%'
+
+    if os.path.isdir(USERS_DIR):
+        for uf in sorted(os.listdir(USERS_DIR)):
+            path = os.path.join(USERS_DIR, uf)
             try:
-                with open(pool_log, 'r') as f:
-                    blocks = f.read().count('Solved block')
+                with open(path, 'r') as f:
+                    d = json.load(f)
+                mtime = os.path.getmtime(path)
+                for w in d.get('worker', []):
+                    status = 'active' if time.time() - mtime < 600 else 'offline'
+                    workers.append({
+                        'name':     html.escape(w.get('workername', uf)),
+                        'hashrate': w.get('hashrate1m', '—'),
+                        'shares':   w.get('shares', 0),
+                        'best':     int(w.get('bestshare', 0)),
+                        'status':   status,
+                    })
             except Exception:
                 pass
 
+    if os.path.exists(POOL_STATUS):
+        try:
+            with open(POOL_STATUS, 'r') as f:
+                for line in f:
+                    try:
+                        d = json.loads(line.strip())
+                        if 'accepted' in d:
+                            tot_acc, tot_rej = d['accepted'], d['rejected']
+                        if 'hashrate1m' in d and 'Users' not in d:
+                            pool_hashrate = d['hashrate1m']
+                    except Exception:
+                        pass
+            pool_rej_pct = f'{(tot_rej/max(1,tot_acc+tot_rej)*100):.2f}%'
+        except Exception:
+            pass
+
+    pool_log = os.path.join(LOG_DIR, 'ckpool.log')
+    if os.path.exists(pool_log):
+        try:
+            with open(pool_log, 'r') as f:
+                blocks = f.read().count('Solved block')
+        except Exception:
+            pass
+
     active  = sum(1 for w in workers if w['status'] == 'active')
     offline = sum(1 for w in workers if w['status'] == 'offline')
-    tot_acc = sum(w['accepted'] for w in workers)
-    tot_rej = sum(w['rejected'] for w in workers)
-    tot_stl = sum(w['stale']    for w in workers)
-    hs      = sum(w['dsps'] * w['diff'] for w in workers)
-
-    def fmt(h):
-        if h >= 1e12: return f'{h/1e12:.2f} TH/s'
-        if h >= 1e9:  return f'{h/1e9:.2f} GH/s'
-        if h >= 1e6:  return f'{h/1e6:.2f} MH/s'
-        return f'{h:.0f} H/s'
-
-    rej_pct = (tot_rej / max(1, tot_acc + tot_rej)) * 100
     return {'workers': workers, 'blocks': blocks,
             'active': active, 'offline': offline,
-            'tot_acc': tot_acc, 'tot_rej': tot_rej, 'tot_stl': tot_stl,
-            'hashrate': fmt(hs), 'rej_pct': f'{rej_pct:.2f}%'}
+            'tot_acc': tot_acc, 'tot_rej': tot_rej,
+            'hashrate': pool_hashrate, 'rej_pct': pool_rej_pct}
 
 # ── Shared CSS ─────────────────────────────────────────────────────────────────
 
@@ -127,7 +124,7 @@ input[type=text]:focus{border-color:#00ff88}
 def dashboard_html(s):
     rows = ''.join(f'''<tr>
       <td>{html.escape(w["name"])}</td>
-      <td>{w["accepted"]:,}</td><td>{w["stale"]}</td><td>{w["rejected"]}</td>
+      <td>{w["shares"]:,}</td><td>{w["hashrate"]}</td><td>{w["best"]:,}</td>
       <td><span class="badge {"ba" if w["status"]=="active" else "bo"}">{w["status"].upper()}</span></td>
     </tr>''' for w in s['workers']
     ) or '<tr><td colspan="5" style="color:#555;text-align:center;padding:20px">No miners connected yet</td></tr>'
@@ -146,7 +143,7 @@ def dashboard_html(s):
     </div>
     <div class="big">{s["tot_acc"]:,}</div><div class="lbl" style="margin-bottom:12px">valid shares</div>
     <div class="sub-row">
-      <div><div class="sub-val">{s["tot_stl"]}</div><div class="lbl">Stale</div></div>
+      <div><div class="sub-val">{s["tot_rej"]}</div><div class="lbl">Rejected</div></div>
       <div><div class="sub-val">{s["tot_rej"]}</div><div class="lbl">Invalid</div></div>
       <div><div class="sub-val g">{s["blocks"]}</div><div class="lbl">Blocks</div></div>
     </div>
@@ -172,7 +169,7 @@ def dashboard_html(s):
 </div>
 <div class="table-wrap">
   <div class="table-title">Active Workers</div>
-  <table><tr><th>Worker (BCH Address)</th><th>Accepted</th><th>Stale</th><th>Rejected</th><th>Status</th></tr>
+  <table><tr><th>Worker</th><th>Shares</th><th>Hashrate</th><th>Best Share</th><th>Status</th></tr>
   {rows}</table>
 </div>
 <div class="footer">Auto-refreshes every 30s &nbsp;·&nbsp; Stratum port 4444 &nbsp;·&nbsp; Worker name = BCH address</div>
