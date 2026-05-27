@@ -256,7 +256,12 @@ def dashboard_html(s):
   <table><tr><th>Worker</th><th>Shares</th><th>Hashrate</th><th>Best Share</th><th>Status</th></tr>
   {rows}</table>
 </div>
-<div class="footer">Auto-refreshes every 30s &nbsp;·&nbsp; Stratum port 4444 &nbsp;·&nbsp; Hover worker name for full address</div>
+<div class="footer">
+  Auto-refreshes every 30s &nbsp;·&nbsp; Stratum port 4444 &nbsp;·&nbsp; Hover worker name for full address
+  <br style="margin-bottom:6px">
+  Powered by <a href="https://www.awfulwafflemining.com" target="_blank" style="color:#00ff88;text-decoration:none">AwfulWaffleMining.com</a>
+  &nbsp;—&nbsp; <em style="color:#666">where all of AI goes to hash</em>
+</div>
 
 <script>
 let chart = null;
